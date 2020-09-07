@@ -1,4 +1,4 @@
-package com.sty.websocketpush.websocket;
+package com.sty.websocketpush.websocket.interfaces;
 
 /**
  * @Author: tian

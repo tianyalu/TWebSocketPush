@@ -1,4 +1,4 @@
-package com.sty.websocketpush.websocket;
+package com.sty.websocketpush.websocket.interfaces;
 
 import com.sty.websocketpush.websocket.bean.Request;
 

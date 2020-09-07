@@ -16,6 +16,14 @@
         android:textAllCaps="false"/>
 
     <Button
+        android:id="@+id/btn_start_service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="开启服务"
+        android:textAllCaps="false"/>
+
+    <Button
         android:id="@+id/btn_disconnect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,14 +37,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="开始心跳"
-        android:textAllCaps="false"/>
-
-    <Button
-        android:id="@+id/btn_keep_alive_ori"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="开始心跳(原生)"
         android:textAllCaps="false"/>
 
     <Button

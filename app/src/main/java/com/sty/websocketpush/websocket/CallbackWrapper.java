@@ -2,6 +2,7 @@ package com.sty.websocketpush.websocket;
 
 import com.sty.websocketpush.websocket.bean.Action;
 import com.sty.websocketpush.websocket.bean.Request;
+import com.sty.websocketpush.websocket.interfaces.IWsCallback;
 
 import java.util.concurrent.ScheduledFuture;
 

@@ -1,5 +1,7 @@
 package com.sty.websocketpush.websocket;
 
+import com.sty.websocketpush.websocket.interfaces.ICallback;
+
 /**
  * @Author: tian
  * @UpdateDate: 2020/9/4 4:21 PM

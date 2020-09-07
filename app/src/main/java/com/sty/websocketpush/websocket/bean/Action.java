@@ -6,7 +6,9 @@ package com.sty.websocketpush.websocket.bean;
  * @UpdateDate: 2020/9/4 3:16 PM
  */
 public enum Action {
-    LOGIN("login", 1, null);
+    LOGIN("login", 1, null),
+    HEARTBEAT("heartbeat", 2, null),
+    SYNC("sync", 3, null);
 
     private String action;
     private int reqEvent;

@@ -5,11 +5,12 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 /**
+ * 客户端请求
  * @Author: tian
  * @UpdateDate: 2020/9/2 6:03 PM
  */
-public class Request<T> implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Request<T>{
+
     /**
      * 行为
      */

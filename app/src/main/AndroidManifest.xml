@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application
         android:name=".websocket.application.MyApplication"
@@ -12,7 +14,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:persistent="true">
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +24,23 @@
             </intent-filter>
         </activity>
         <receiver android:name=".websocket.receiver.NetStatusReceiver" />
+        <receiver
+            android:name=".websocket.receiver.RebootTPushReceiver">
+            <intent-filter>
+                <!-- 自定义Action-->
+                <action android:name="com.sty.tpush.destroy"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".websocket.receiver.ScreenStatusReceiver" />
+
+        <service
+            android:name=".websocket.service.TPushService"
+            android:process=":tpushservice">
+            <!-- 提高优先级以尽量避免被杀死-->
+            <intent-filter android:priority="1000">
+                <action android:name="com.sty.mypushservice"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

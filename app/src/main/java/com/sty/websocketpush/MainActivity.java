@@ -1,24 +1,33 @@
 package com.sty.websocketpush;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.sty.websocketpush.websocket.RequestListen;
 import com.sty.websocketpush.websocket.WebSocketManager;
+import com.sty.websocketpush.websocket.bean.Action;
+import com.sty.websocketpush.websocket.bean.LoginInfo;
 import com.sty.websocketpush.websocket.bean.Request;
 import com.sty.websocketpush.websocket.bean.RequestChild;
+import com.sty.websocketpush.websocket.receiver.ReceiverManager;
+import com.sty.websocketpush.websocket.service.TPushService;
+import com.sty.websocketpush.websocket.utils.AppUtils;
+import com.sty.websocketpush.websocket.utils.PermissionUtils;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private String[] needPermissions = {Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_PHONE_STATE};
     private Button btnConnect;
     private Button btnDisconnect;
     private Button btnSendMessage;
     private Button btnKeepAlive;
-    private Button btnKeepAliveOri;
+    private Button btnStartService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
 
         initView();
         addListeners();
+        ReceiverManager.registerScreenStatusReceiver(this);
+
+        if (!PermissionUtils.checkPermissions(this, needPermissions)) {
+            PermissionUtils.requestPermissions(this, needPermissions);
+        }
     }
 
     private void initView() {
@@ -34,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         btnDisconnect = findViewById(R.id.btn_disconnect);
         btnSendMessage = findViewById(R.id.btn_send_message);
         btnKeepAlive = findViewById(R.id.btn_keep_alive);
-        btnKeepAliveOri = findViewById(R.id.btn_keep_alive_ori);
+        btnStartService = findViewById(R.id.btn_start_service);
     }
 
     private void addListeners() {
@@ -59,43 +73,51 @@ public class MainActivity extends AppCompatActivity {
         btnKeepAlive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                WebSocketManager.getInstance().startKeepAlive();
+                WebSocketManager.getInstance().startHeartbeat();
             }
         });
-        btnKeepAliveOri.setOnClickListener(new View.OnClickListener() {
+        btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(MainActivity.this, TPushService.class);
+                startService(intent);
             }
         });
     }
 
     private void onBtnConnectClicked() {
-//        WebSocketManager.getInstance().connect();
+
     }
 
     private void onBtnSendMessageClicked() {
-        RequestChild requestChild = new RequestChild.Builder()
-                .setId("12345")
-                .setClientType("你好， hello! ")
+        LoginInfo loginInfo = new LoginInfo.Builder()
+                .setDeviceId(AppUtils.getUniqueDeviceId(this))
+                .setStoreGid("1062")
+                .setStaffGid("106200000000000249")
+                .setUserName("三藏")
+                .setUserName("106449")
+                .setPwd("e410cc5446c6b0f624746dee5bb816cc")
                 .build();
-        Request request = new Request.Builder()
-                .setAction(WebSocketManager.ACTION_REQ_MESSAGE)
-                .setTimeout(10 * 1000)
-                .setReqCount(0)
-//                .setRequestChild(requestChild)
-                .build();
+        Log.d(TAG, loginInfo.toString());
 
-//        WebSocketManager.getInstance().sendRequest(request, request.getReqCount() + 1, new RequestListen() {
-//            @Override
-//            public void requestSuccess() {
-//                Log.d(TAG, "requestSuccess: 发送消息成功");
-//            }
-//
-//            @Override
-//            public void requestFailed(String message) {
-//                Log.d(TAG, "requestFailed: 发送消息失败： " + message);
-//            }
-//        });
+        WebSocketManager.getInstance().sendReq(Action.LOGIN, loginInfo, null);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ReceiverManager.unRegisterScreenStatusReceiver(this);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PermissionUtils.REQUEST_PERMISSIONS_CODE) {
+            if (!PermissionUtils.verifyPermissions(grantResults)) {
+                PermissionUtils.showMissingPermissionDialog(this);
+            } else {
+
+            }
+        }
     }
 }

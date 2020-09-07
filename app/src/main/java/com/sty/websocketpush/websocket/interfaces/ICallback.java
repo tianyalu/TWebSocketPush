@@ -1,4 +1,4 @@
-package com.sty.websocketpush.websocket;
+package com.sty.websocketpush.websocket.interfaces;
 
 /**
  * UI层回调接口
