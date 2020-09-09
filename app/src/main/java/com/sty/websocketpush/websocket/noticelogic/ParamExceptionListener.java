@@ -21,7 +21,7 @@ public class ParamExceptionListener implements INotifyListener {
         //暂时停止重连，
         WebSocketManager.getInstance().stopReconnectTemporarily();
         //请求登录获取token，
-        //这里省略
+        // todo 这里省略
         // 无论成功失败都继续重连
         WebSocketManager.getInstance().cancelStopReconnectTemporarily();
         WebSocketManager.getInstance().reconnect();

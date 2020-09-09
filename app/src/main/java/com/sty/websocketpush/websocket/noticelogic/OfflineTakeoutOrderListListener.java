@@ -5,12 +5,15 @@ import com.sty.websocketpush.websocket.WebSocketManager;
 import com.sty.websocketpush.websocket.bean.Action;
 import com.sty.websocketpush.websocket.bean.AnnounceTakeOutOrderNotify;
 import com.sty.websocketpush.websocket.bean.ConfirmMessage;
+import com.sty.websocketpush.websocket.event.WsTakeoutOrderEvent;
 import com.sty.websocketpush.websocket.interfaces.ICallback;
 import com.sty.websocketpush.websocket.interfaces.INotifyListener;
 import com.sty.websocketpush.websocket.interfaces.NotifyClass;
 import com.sty.websocketpush.websocket.utils.Logger;
 
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * 具体逻辑对应的处理子类
@@ -43,7 +46,8 @@ public class OfflineTakeoutOrderListListener implements INotifyListener<List<Ann
                             Logger.d(TAG, "fail");
                         }
                     });
-                    //todo 这里发收到离线消息的EventBus
+                    EventBus.getDefault().post(new WsTakeoutOrderEvent(orderNotify));
+                    //todo 在需要的地方接收
                 }
             }catch (Exception e) {
                 e.printStackTrace();

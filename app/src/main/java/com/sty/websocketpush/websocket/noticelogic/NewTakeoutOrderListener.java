@@ -4,10 +4,13 @@ import com.sty.websocketpush.websocket.WebSocketManager;
 import com.sty.websocketpush.websocket.bean.Action;
 import com.sty.websocketpush.websocket.bean.AnnounceTakeOutOrderNotify;
 import com.sty.websocketpush.websocket.bean.ConfirmMessage;
+import com.sty.websocketpush.websocket.event.WsTakeoutOrderEvent;
 import com.sty.websocketpush.websocket.interfaces.ICallback;
 import com.sty.websocketpush.websocket.interfaces.INotifyListener;
 import com.sty.websocketpush.websocket.interfaces.NotifyClass;
 import com.sty.websocketpush.websocket.utils.Logger;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * 具体逻辑对应的处理子类
@@ -35,7 +38,8 @@ public class NewTakeoutOrderListener implements INotifyListener<AnnounceTakeOutO
                 public void onFail(String msg) {
                 }
             });
-            //todo 这里发收到新订单的EventBus
+            EventBus.getDefault().post(new WsTakeoutOrderEvent(announceMsgNotify));
+            //todo 在需要的地方接收
         }
     }
 }
