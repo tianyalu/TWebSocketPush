@@ -3,6 +3,8 @@ package com.sty.websocketpush.websocket.bean;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * @Author: tian
  * @UpdateDate: 2020/9/7 9:41 AM
@@ -10,6 +12,8 @@ import android.os.Parcelable;
 public class ChildResponse implements Parcelable {
     private int code; //code == 0 表示成功
     private String msg;
+    @SerializedName("data_type")
+    private int dataType; //0：对象 1：数组
     private String data;
 
     public ChildResponse() {
@@ -19,6 +23,7 @@ public class ChildResponse implements Parcelable {
     protected ChildResponse(Parcel in) {
         code = in.readInt();
         msg = in.readString();
+        dataType = in.readInt();
         data = in.readString();
     }
 
@@ -50,6 +55,14 @@ public class ChildResponse implements Parcelable {
         this.msg = msg;
     }
 
+    public int getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(int dataType) {
+        this.dataType = dataType;
+    }
+
     public String getData() {
         return data;
     }
@@ -67,6 +80,7 @@ public class ChildResponse implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(code);
         dest.writeString(msg);
+        dest.writeInt(dataType);
         dest.writeString(data);
     }
 

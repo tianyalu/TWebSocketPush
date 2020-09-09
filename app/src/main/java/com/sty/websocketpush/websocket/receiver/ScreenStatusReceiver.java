@@ -3,9 +3,9 @@ package com.sty.websocketpush.websocket.receiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import com.sty.websocketpush.websocket.WebSocketManager;
+import com.sty.websocketpush.websocket.utils.Logger;
 
 /**
  * 静态注册该广播无效，需要动态注册
@@ -18,12 +18,12 @@ public class ScreenStatusReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if(intent != null) {
             if("android.intent.action.SCREEN_ON".equals(intent.getAction())) {
-                Log.d(TAG, "Detect screen on : " + WebSocketManager.getInstance().isConnected());
+                Logger.d(TAG, "Detect screen on : " + WebSocketManager.getInstance().isConnected());
                 if(!WebSocketManager.getInstance().isConnected()) {
                     WebSocketManager.getInstance().reconnect();
                 }
             }else if("android.intent.action.SCREEN_OFF".equals(intent.getAction())) {
-                Log.d(TAG, "Detect screen off");
+                Logger.d(TAG, "Detect screen off");
             }
         }
     }

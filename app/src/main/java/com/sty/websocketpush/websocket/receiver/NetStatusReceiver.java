@@ -5,9 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import com.sty.websocketpush.websocket.WebSocketManager;
+import com.sty.websocketpush.websocket.utils.Logger;
 
 /**
  * @Author: tian
@@ -26,7 +26,7 @@ public class NetStatusReceiver extends BroadcastReceiver {
                 //获取当前网络状态信息
                 NetworkInfo info = connectivityManager.getActiveNetworkInfo();
                 if(info != null && info.isAvailable()) {
-                    Log.d(TAG, "监听到可用网络切换，调用重连方法");
+                    Logger.d(TAG, "监听到可用网络切换，调用重连方法");
                     WebSocketManager.getInstance().reconnect();
                 }
             }

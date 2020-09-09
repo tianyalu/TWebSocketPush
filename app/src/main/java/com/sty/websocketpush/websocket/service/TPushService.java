@@ -3,9 +3,9 @@ package com.sty.websocketpush.websocket.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.sty.websocketpush.websocket.WebSocketManager;
+import com.sty.websocketpush.websocket.utils.Logger;
 
 import androidx.annotation.Nullable;
 
@@ -20,7 +20,7 @@ public class TPushService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate");
+        Logger.d(TAG, "onCreate");
         mWebSocketManager = WebSocketManager.getInstance();
         mWebSocketManager.init();
     }
@@ -28,20 +28,20 @@ public class TPushService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind");
+        Logger.d(TAG, "onBind");
         return null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
+        Logger.d(TAG, "onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy");
+        Logger.d(TAG, "onDestroy");
         if(mWebSocketManager != null) {
             mWebSocketManager.disconnect();
         }

@@ -4,7 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
-import android.util.Log;
+import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -14,6 +14,7 @@ import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
 import com.sty.websocketpush.BuildConfig;
+import com.sty.websocketpush.websocket.application.AppConfig;
 import com.sty.websocketpush.websocket.application.MyApplication;
 import com.sty.websocketpush.websocket.bean.Action;
 import com.sty.websocketpush.websocket.bean.ChildResponse;
@@ -26,6 +27,7 @@ import com.sty.websocketpush.websocket.interfaces.ICallback;
 import com.sty.websocketpush.websocket.interfaces.IWsCallback;
 import com.sty.websocketpush.websocket.utils.AppUtils;
 import com.sty.websocketpush.websocket.utils.Constants;
+import com.sty.websocketpush.websocket.utils.Logger;
 import com.sty.websocketpush.websocket.utils.NetworkUtils;
 
 import java.io.IOException;
@@ -49,8 +51,6 @@ import androidx.annotation.NonNull;
  */
 public class WebSocketManager {
     private static final String TAG = WebSocketManager.class.getSimpleName();
-    public static final String ACTION_KEEP_ALIVE = "action_keep_alive";
-    public static final String ACTION_REQ_MESSAGE = "action_req_message";
 
     private static final int SUCCESS_HANDLE = 0x01;
     private static final int ERROR_HANDLE = 0x02;
@@ -64,8 +64,10 @@ public class WebSocketManager {
     private long maxInterval = 60000; //重连最大时间间隔
     private AtomicLong atomicLong = new AtomicLong(SystemClock.uptimeMillis()); //每个请求的唯一标识
     private int heartbeatFailCount = 0;
+    private boolean isTempStopReconnect = false;
 
     private String url;
+    private String socketUrl;
 
     private WebSocket mWebSocket;
     private WsStatus mStatus;
@@ -120,8 +122,10 @@ public class WebSocketManager {
      */
     private void createAndConnectSocket() {
         try {
+            socketUrl = AppConfig.getSocketUrl();
+
             mWebSocket = new WebSocketFactory()
-                    .createSocket(Constants.WEB_SOCKET_URL, CONNECT_TIMEOUT)
+                    .createSocket(socketUrl, CONNECT_TIMEOUT)
                     //设置帧队列最大值为5
                     .setFrameQueueSize(FRAME_QUEUE_SIZE)
                     //设置不允许服务端关闭连接却未发送关闭帧
@@ -138,13 +142,13 @@ public class WebSocketManager {
     public void reconnect() {
         if(!NetworkUtils.isNetConnect()) {
             reconnectCount = 0;
-            Log.d(TAG, "重连时网络不可用");
+            Logger.d(TAG, "重连时网络不可用");
             return;
         }
 
         //todo 用户登录状态的判断
-        //socket不为空，并且当前连接已断开，并且不处于连接状态
-        if(mWebSocket != null && !mWebSocket.isOpen() && getStatus() != WsStatus.CONNECTING) {
+        //socket不为空，并且当前连接已断开，并且不处于连接状态,并且没有暂停重连
+        if(mWebSocket != null && !mWebSocket.isOpen() && getStatus() != WsStatus.CONNECTING && !isTempStopReconnect) {
             reconnectCount++;
             setStatus(WsStatus.CONNECTING);
             cancelHeartbeat(); //取消心跳
@@ -157,7 +161,7 @@ public class WebSocketManager {
                 long temp = minInterval * (reconnectCount - 2);
                 reconnectTime = temp > maxInterval ? maxInterval : temp;
             }
-            Log.d(TAG, "准备开始第" + reconnectCount + "次重连，重连间隔: " + reconnectTime + "  -- url: " + url);
+            Logger.d(TAG, "准备开始第" + reconnectCount + "次重连，重连间隔: " + reconnectTime + "  -- url: " + url);
             mHandler.postDelayed(mReconnectTask, reconnectTime);
         }
     }
@@ -188,9 +192,10 @@ public class WebSocketManager {
         @Override
         public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
             setStatus(WsStatus.CONNECT_SUCCESS);
-            Log.d(TAG, "onConnected: 连接成功");
+            Logger.d(TAG, "onConnected: 连接成功");
             cancelReconnect(); //连接成功时取消重连，初始化连接次数
-            doAuth();
+            // doAuth();  //现在不做授权了，连接成功后就开始心跳
+            startHeartbeat();
         }
 
         @Override
@@ -198,7 +203,7 @@ public class WebSocketManager {
             setStatus(WsStatus.CONNECT_FAIL);
             //连接错误也重连
             reconnect();
-            Log.d(TAG, "onConnectError: 连接错误");
+            Logger.d(TAG, "onConnectError: 连接错误");
             cause.printStackTrace();
         }
 
@@ -207,12 +212,12 @@ public class WebSocketManager {
             setStatus(WsStatus.CONNECT_FAIL);
             //连接断开后自动重连
             reconnect();
-            Log.d(TAG, "onDisconnected: 连接断开");
+            Logger.d(TAG, "onDisconnected: 连接断开");
         }
 
         @Override
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
-            Log.d(TAG, "onTextMessage: 收到消息 --> "  + text);
+            Logger.d(TAG, "onTextMessage: 收到消息 --> "  + text);
             onReceiveMessage(text);
         }
     }
@@ -223,10 +228,11 @@ public class WebSocketManager {
      */
     private void onReceiveMessage(String text) {
         Response response = Codec.decoder(text); //解析出第一层Bean
+        Logger.d(TAG, "respEvent: " + response.getRespEvent());
         if(response.getRespEvent() == 10) { //请求的响应
             CallbackWrapper wrapper = callbacks.remove(Long.parseLong(response.getSeqId())); //找到对应的callback
             if(wrapper == null) {
-                Log.d(TAG, "(action: (" + response.getAction() + ") not found callback");
+                Logger.d(TAG, "(action: (" + response.getAction() + ") not found callback");
                 return;
             }
 
@@ -269,7 +275,7 @@ public class WebSocketManager {
     public <T> void sendReq(Action action, T req, final ICallback callback, final long timeout, int reqCount) {
         if(!NetworkUtils.isNetConnect()) {
             callback.onFail("网络不可用");
-            Log.d(TAG, "sendReq: 网络不可用");
+            Logger.d(TAG, "sendReq: 网络不可用");
             return;
         }
         Request<T> request = new Request.Builder<T>()
@@ -303,7 +309,7 @@ public class WebSocketManager {
         callbacks.put(request.getSeqId(), new CallbackWrapper(tempCallback, timeoutTask, action, request));
 
         String requestMessage = new Gson().toJson(request);
-        Log.d(TAG, "send text: " + requestMessage);
+        Logger.d(TAG, "send text: " + requestMessage);
         if(mWebSocket != null) {
             mWebSocket.sendText(requestMessage);
         }
@@ -316,7 +322,7 @@ public class WebSocketManager {
      * @return
      */
     private ScheduledFuture enqueueTimeout(final Request request, final long timeoutMillis) {
-        Log.d(TAG, "  enqueueTimeout: 添加超时任务类型为： " + request.getAction());
+        Logger.d(TAG, "  enqueueTimeout: 添加超时任务类型为： " + request.getAction());
         return singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -334,17 +340,17 @@ public class WebSocketManager {
      */
     private void timeoutHandle(Request request, Action action, ICallback callback, long timeoutMillis) {
         if(request.getReqCount() > 3) {
-            Log.d(TAG, "timeoutHandle: action(" + action.getAction() + ")连续3次请求超时，需要执行http请求");
+            Logger.d(TAG, "timeoutHandle: action(" + action.getAction() + ")连续3次请求超时，需要执行http请求");
             //TODO 走http请求
         } else {
             sendReq(action, request.getReq(), callback, timeoutMillis, request.getReqCount() + 1);
-            Log.d(TAG, "timeoutHandle: action(" + action.getAction() + ")发起第 " +
+            Logger.d(TAG, "timeoutHandle: action(" + action.getAction() + ")发起第 " +
                     request.getReqCount() + " 次请求");
         }
     }
 
     /**
-     * 授权
+     * 授权(现在不做授权了，连接成功后就开始心跳)
      */
     private void doAuth() {
         //todo 传递POS基本信息
@@ -353,13 +359,13 @@ public class WebSocketManager {
                 .setStoreGid("1062")
                 .setStaffGid("106200000000000249")
                 .setUserName("三藏")
-                .setUserName("106449")
+                .setStaffNumber("106449")
                 .setPwd("e410cc5446c6b0f624746dee5bb816cc")
                 .build();
         sendReq((Action.LOGIN), loginInfo, new ICallback() {
             @Override
             public void onSuccess(Object o) {
-                Log.d(TAG, "授权成功");
+                Logger.d(TAG, "授权成功");
                 setStatus(WsStatus.AUTH_SUCCESS);
                 startHeartbeat();
 //                delaySyncData();
@@ -440,8 +446,18 @@ public class WebSocketManager {
     }
 
     public boolean isConnected() {
-        Log.d(TAG, "当前状态： " + this.mStatus);
-        return this.mStatus == WsStatus.CONNECT_SUCCESS;
+        Logger.d(TAG, "当前状态： " + this.mStatus);
+        return this.mStatus == WsStatus.CONNECT_SUCCESS || this.mStatus == WsStatus.AUTH_SUCCESS;
+    }
+
+    public void stopReconnectTemporarily() {
+        isTempStopReconnect = true;
+        cancelReconnect();
+        cancelHeartbeat();
+    }
+
+    public void cancelStopReconnectTemporarily() {
+        isTempStopReconnect = false;
     }
 
     class MyHandler extends Handler {
@@ -454,11 +470,17 @@ public class WebSocketManager {
             switch (msg.what) {
                 case SUCCESS_HANDLE:
                     CallbackDataWrapper successWrapper = (CallbackDataWrapper) msg.obj;
-                    successWrapper.getCallback().onSuccess(successWrapper.getData());
+                    ICallback successICallback = successWrapper.getCallback();
+                    if(successICallback != null) {
+                        successICallback.onSuccess(successWrapper.getData());
+                    }
                     break;
                 case ERROR_HANDLE:
                     CallbackDataWrapper errorWrapper = (CallbackDataWrapper) msg.obj;
-                    errorWrapper.getCallback().onFail((String) errorWrapper.getData());
+                    ICallback errorICallback = errorWrapper.getCallback();
+                    if(errorICallback != null) {
+                        errorICallback.onFail((String) errorWrapper.getData());
+                    }
                     break;
                 default:
                     break;
