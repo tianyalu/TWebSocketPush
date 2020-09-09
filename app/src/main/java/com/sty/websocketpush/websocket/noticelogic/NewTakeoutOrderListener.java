@@ -26,15 +26,15 @@ public class NewTakeoutOrderListener implements INotifyListener<AnnounceTakeOutO
         Logger.d(TAG, announceMsgNotify.toString());
         if(announceMsgNotify != null) {
             ConfirmMessage confirmMessage = new ConfirmMessage(announceMsgNotify.getMessageId());
-//            WebSocketManager.getInstance().sendReq(Action.GOT_MESSAGE, confirmMessage, new ICallback() {
-//                @Override
-//                public void onSuccess(Object o) {
-//                }
-//
-//                @Override
-//                public void onFail(String msg) {
-//                }
-//            });
+            WebSocketManager.getInstance().sendReq(Action.GOT_MESSAGE, confirmMessage, new ICallback() {
+                @Override
+                public void onSuccess(Object o) {
+                }
+
+                @Override
+                public void onFail(String msg) {
+                }
+            });
             //todo 这里发收到新订单的EventBus
         }
     }
