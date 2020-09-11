@@ -15,6 +15,14 @@ public class Logger {
     private static boolean displayLogOnView = true;
     private static String defaultTag = "logger";
 
+    public static void switchDisplayLogOnView(boolean isEnable) {
+        displayLogOnView = isEnable;
+    }
+
+    public static boolean getDisplayLogOnViewStatus() {
+        return displayLogOnView;
+    }
+
     public static void v(String tag, String msg) {
         if(showLog) {
             Log.v(tag, msg);

@@ -23,6 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- 静态注册已经无效了-->
         <receiver android:name=".websocket.receiver.NetStatusReceiver" />
         <receiver
             android:name=".websocket.receiver.RebootTPushReceiver">
@@ -31,11 +32,17 @@
                 <action android:name="com.sty.tpush.destroy"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".websocket.receiver.ScreenStatusReceiver" />
+        <!-- 静态注册已经无效了-->
+        <receiver android:name=".websocket.receiver.ScreenStatusReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_ON"/>
+                <action android:name="android.intent.action.SCREEN_OFF"/>
+            </intent-filter>
+        </receiver>
 
         <service
-            android:name=".websocket.service.TPushService"
-            android:process=":tpushservice">
+            android:name=".websocket.service.TPushService">
+            <!-- android:process=":tpushservice"-->
             <!-- 提高优先级以尽量避免被杀死-->
             <intent-filter android:priority="1000">
                 <action android:name="com.sty.mypushservice"/>
