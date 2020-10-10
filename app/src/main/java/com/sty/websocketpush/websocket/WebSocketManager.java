@@ -240,8 +240,16 @@ public class WebSocketManager {
                 wrapper.getTimeoutTask().cancel(true); //取消超时任务
                 ChildResponse childResponse = Codec.decoderChildResp(response.getResp()); //解析第二层Bean
                 if(childResponse.isOK()) {
-                    Object o = new Gson().fromJson(childResponse.getData(), wrapper.getAction().getRespClazz());
-                    wrapper.getTempCallback().onSuccess(o);
+                    try {
+                        String childData = childResponse.getData();
+                        Object o = null;
+                        if(!"{}".equals(childData)) {
+                            o = new Gson().fromJson(childData, wrapper.getAction().getRespClazz());
+                        }
+                        wrapper.getTempCallback().onSuccess(o);
+                    }catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     wrapper.getTempCallback().onError(ErrorCode.BUSINESS_EXCEPTION.getMsg(),
                             wrapper.getRequest(), wrapper.getAction());
