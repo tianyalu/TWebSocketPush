@@ -60,7 +60,7 @@ public class NotifyListenerManager {
         }
 
         Object result = null;
-        if(!TextUtils.isEmpty(dataStr)) {
+        if(!TextUtils.isEmpty(dataStr) && !"{}".equals(dataStr)) {
             NotifyClass notifyClass = listener.getClass().getAnnotation(NotifyClass.class);
             final Class<?> clazz = notifyClass.value();
 
@@ -80,6 +80,7 @@ public class NotifyListenerManager {
                         }
                     }
                     result = resultList;
+                    Logger.d(TAG, "result: " + result.toString());
                 }
 
             } catch (JsonSyntaxException e) {
@@ -87,7 +88,7 @@ public class NotifyListenerManager {
                 Logger.d(TAG, "error: " + e.getMessage());
             }
         }
-        Logger.d(TAG, "result: " + result.toString());
+
         listener.fire(result);
     }
 }
